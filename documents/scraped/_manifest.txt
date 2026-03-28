@@ -1,0 +1,36 @@
+Scraping realizado: 2026-03-28 12:59
+Paginas: 8/11
+
+[FALLO] CNMC - Mercado electrico
+  https://www.cnmc.es/ambitos-de-actuacion/energia/mercado-electrico
+
+[FALLO] CNMC - Consumidores de energia
+  https://www.cnmc.es/ambitos-de-actuacion/energia/consumidores-energia
+
+[OK] CNMC - Herramientas utiles
+  https://www.cnmc.es/facil-para-ti/herramientas-utiles
+
+[OK] MITECO - Bono Social portal
+  https://www.miteco.gob.es/es/energia/energia-electrica/bono-social.html
+
+[OK] MITECO - Bono Social normativa
+  https://www.miteco.gob.es/es/energia/energia-electrica/bono-social/normativa-bono-social.html
+
+[OK] MITECO - Bono Social requisitos
+  https://www.miteco.gob.es/es/energia/energia-electrica/bono-social/requisitos.html
+
+[OK] MITECO - Bono Social FAQ
+  https://www.miteco.gob.es/es/energia/energia-electrica/bono-social/preguntas-frecuentes-bono-social.html
+
+[OK] MITECO - Cortes de suministro y SMV
+  https://www.miteco.gob.es/es/energia/energia-electrica/electricidad/contratacion-suministro/cortes-suministro.html
+
+[OK] MITECO - Comercializadores
+  https://www.miteco.gob.es/es/energia/energia-electrica/electricidad/distribuidores/comercializadores.html
+
+[FALLO] REE - Acerca de ESIOS
+  https://www.esios.ree.es/es/acerca-de-esios
+
+[OK] REE - Participacion en SIMEL
+  https://www.ree.es/es/clientes/representante/gestion-medidas-electricas/participar-en-sistema-de-medidas
+

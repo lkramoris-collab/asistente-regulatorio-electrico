@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reglamento Electrico - Asistente Regulatorio</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: #1a365d;
+            color: white;
+            padding: 14px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .header h1 { font-size: 17px; font-weight: 600; }
+        .header .subtitle { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+
+        .header-actions { display: flex; gap: 12px; align-items: center; }
+
+        .budget-info { text-align: right; font-size: 11px; opacity: 0.85; }
+
+        .budget-bar {
+            width: 100px; height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px; margin-top: 4px; overflow: hidden;
+        }
+
+        .budget-bar-fill {
+            height: 100%; border-radius: 3px;
+            transition: width 0.5s, background 0.5s;
+        }
+
+        .btn-reset {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 6px 14px;
+            border-radius: 6px; cursor: pointer; font-size: 12px;
+        }
+
+        .btn-reset:hover { background: rgba(255,255,255,0.25); }
+
+        /* Resources panel */
+        .resources-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+        }
+
+        .resources-overlay.active { display: block; }
+
+        .resources-panel {
+            position: fixed;
+            top: 0; right: 0; bottom: 0;
+            width: 420px;
+            max-width: 90vw;
+            background: white;
+            z-index: 101;
+            overflow-y: auto;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            padding: 24px;
+        }
+
+        .resources-panel.active { transform: translateX(0); }
+
+        .resources-panel h2 {
+            font-size: 18px;
+            color: #1a365d;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .resources-panel .close-btn {
+            background: none; border: none;
+            font-size: 22px; cursor: pointer; color: #64748b;
+        }
+
+        .resources-section {
+            margin-bottom: 20px;
+        }
+
+        .resources-section h3 {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .resource-item {
+            display: block;
+            padding: 6px 0;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .resource-item a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .resource-item a:hover { text-decoration: underline; }
+
+        .resource-item .doc-name {
+            color: #334155;
+        }
+
+        /* Mode selector bar */
+        .mode-bar {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 8px 24px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 7px 14px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #475569;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mode-btn:hover { border-color: #1a365d; color: #1a365d; }
+
+        .mode-btn.active {
+            background: #1a365d;
+            color: white;
+            border-color: #1a365d;
+        }
+
+        .mode-btn .mode-icon { font-size: 14px; }
+
+        .mode-description {
+            font-size: 11px;
+            color: #64748b;
+            padding: 4px 24px 0;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+
+        /* Chat area */
+        .chat-container {
+            flex: 1; overflow-y: auto;
+            padding: 20px 24px;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+
+        .message {
+            max-width: 85%; padding: 14px 18px;
+            border-radius: 12px; line-height: 1.6;
+            font-size: 14px; animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #1a365d; color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: white; color: #1a1a1a;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+
+        .message.assistant .sources {
+            margin-top: 12px; padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 11px; color: #64748b;
+        }
+
+        .message.assistant .sources strong { color: #475569; }
+        .message.assistant .mode-tag {
+            display: inline-block;
+            font-size: 10px;
+            background: #e2e8f0;
+            color: #475569;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .message.error {
+            align-self: center;
+            background: #fee2e2; color: #dc2626; font-size: 13px;
+        }
+
+        .message.warning {
+            align-self: center;
+            background: #fef3c7; color: #92400e;
+            font-size: 12px; padding: 8px 16px; border-radius: 8px;
+        }
+
+        .message.assistant strong { color: #1e293b; }
+        .message.assistant a { color: #2563eb; text-decoration: none; }
+        .message.assistant a:hover { text-decoration: underline; }
+
+        .typing-indicator {
+            align-self: flex-start;
+            padding: 14px 18px; background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            display: none; gap: 6px; align-items: center;
+        }
+
+        .typing-indicator.active { display: flex; }
+
+        .typing-indicator span {
+            width: 8px; height: 8px;
+            background: #94a3b8; border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        /* Input area */
+        .input-area {
+            padding: 14px 24px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex; gap: 12px; align-items: flex-end;
+        }
+
+        .input-area textarea {
+            flex: 1; padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px; font-size: 14px;
+            font-family: inherit; resize: none;
+            outline: none; min-height: 48px; max-height: 120px;
+        }
+
+        .input-area textarea:focus { border-color: #1a365d; }
+
+        .input-controls {
+            display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+
+        .length-selector {
+            display: flex; gap: 2px;
+            background: #f1f5f9;
+            border-radius: 8px; padding: 2px;
+        }
+
+        .length-btn {
+            padding: 4px 10px; border: none;
+            background: transparent; cursor: pointer;
+            font-size: 11px; border-radius: 6px; color: #64748b;
+        }
+
+        .length-btn.active { background: #1a365d; color: white; }
+        .length-btn:hover:not(.active) { background: #e2e8f0; }
+
+        .precision-btn {
+            padding: 4px 10px; border: none;
+            background: transparent; cursor: pointer;
+            font-size: 11px; border-radius: 6px; color: #64748b;
+        }
+
+        .precision-btn.active { background: #b45309; color: white; }
+        .precision-btn:hover:not(.active) { background: #fef3c7; }
+
+        .send-btn {
+            background: #1a365d; color: white;
+            border: none; padding: 12px 24px;
+            border-radius: 10px; cursor: pointer;
+            font-size: 14px; font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .send-btn:hover { background: #2d4a7a; }
+        .send-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        /* Welcome screen */
+        .welcome {
+            text-align: center; color: #64748b;
+            margin: auto; max-width: 600px;
+        }
+
+        .welcome h2 { color: #1a365d; font-size: 20px; margin-bottom: 8px; }
+        .welcome p { font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+
+        .welcome-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            text-align: left;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 10px;
+            padding: 14px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+
+        .welcome-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+        .welcome-card h3 {
+            font-size: 12px; color: #1a365d;
+            margin-bottom: 6px;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .welcome-card p {
+            font-size: 12px; color: #64748b;
+            margin: 0; line-height: 1.4;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #f1f5f9;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 11px;
+            cursor: pointer;
+            color: #64748b;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .message.assistant:hover .copy-btn { opacity: 1; }
+        .copy-btn:hover { background: #e2e8f0; }
+
+        .message.assistant { position: relative; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>Asistente Regulatorio Electrico</h1>
+            <div class="subtitle">RD 88/2026 | Ley 24/2013 | RD 897/2017 | RD 216/2014</div>
+        </div>
+        <div class="header-actions">
+            <div class="budget-info">
+                <span id="budgetText">Cargando...</span>
+                <div class="budget-bar">
+                    <div class="budget-bar-fill" id="budgetBarFill" style="width: 0%; background: #4ade80;"></div>
+                </div>
+            </div>
+            <button class="btn-reset" onclick="toggleResources()">Recursos</button>
+            <button class="btn-reset" onclick="resetChat()">Nueva conversacion</button>
+        </div>
+    </div>
+
+    <!-- Resources panel -->
+    <div class="resources-overlay" id="resourcesOverlay" onclick="toggleResources()"></div>
+    <div class="resources-panel" id="resourcesPanel">
+        <h2>Recursos y fuentes <button class="close-btn" onclick="toggleResources()">&times;</button></h2>
+        <div id="resourcesContent">Cargando...</div>
+    </div>
+
+    <div class="mode-bar">
+        <button class="mode-btn active" data-mode="consulta" onclick="setMode(this)">
+            <span class="mode-icon">&#128269;</span> Consulta regulatoria
+        </button>
+        <button class="mode-btn" data-mode="comunicacion_cliente" onclick="setMode(this)">
+            <span class="mode-icon">&#9993;</span> Comunicacion a clientes
+        </button>
+        <button class="mode-btn" data-mode="briefing_interno" onclick="setMode(this)">
+            <span class="mode-icon">&#128203;</span> Briefing interno
+        </button>
+        <button class="mode-btn" data-mode="deadlines" onclick="setMode(this)">
+            <span class="mode-icon">&#128197;</span> Plazos y deadlines
+        </button>
+    </div>
+    <div class="mode-description" id="modeDescription">Consulta directa sobre normativa. Respuestas con referencias a articulos y plazos.</div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="welcome" id="welcome">
+            <h2>Asistente Regulatorio</h2>
+            <p>Herramienta de consulta basada en normativa publica del sector electrico espanol. Selecciona un modo de trabajo arriba y haz tu pregunta.</p>
+            <div class="welcome-grid">
+                <div class="welcome-card" onclick="quickStart('consulta', 'Que cambia en la venta telefonica a consumidores personas fisicas con el RD 88/2026?')">
+                    <h3>&#128269; Consulta</h3>
+                    <p>Que cambia en la venta telefonica a consumidores personas fisicas?</p>
+                </div>
+                <div class="welcome-card" onclick="quickStart('comunicacion_cliente', 'Redacta una comunicacion informando a los clientes sobre los nuevos derechos de rescision de contrato sin penalizacion')">
+                    <h3>&#9993; Comunicacion</h3>
+                    <p>Borrador informando sobre nuevos derechos de rescision sin penalizacion</p>
+                </div>
+                <div class="welcome-card" onclick="quickStart('briefing_interno', 'Preparame un briefing sobre los cambios en facturacion y lectura que introduce el RD 88/2026')">
+                    <h3>&#128203; Briefing</h3>
+                    <p>Briefing sobre cambios en facturacion y lectura del RD 88/2026</p>
+                </div>
+                <div class="welcome-card" onclick="quickStart('deadlines', 'Dame todos los plazos del RD 88/2026 que afectan a una comercializadora')">
+                    <h3>&#128197; Plazos</h3>
+                    <p>Todos los plazos del RD 88/2026 que afectan a una comercializadora</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="typing-indicator" id="typingIndicator">
+        <span></span><span></span><span></span>
+    </div>
+
+    <div class="input-area">
+        <textarea id="userInput" placeholder="Escribe tu pregunta o peticion..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+        <div class="input-controls">
+            <div class="length-selector">
+                <button class="length-btn" data-length="short" onclick="setLength(this)">Corta</button>
+                <button class="length-btn active" data-length="medium" onclick="setLength(this)">Media</button>
+                <button class="length-btn" data-length="detailed" onclick="setLength(this)">Detallada</button>
+            </div>
+            <div class="length-selector" style="margin-left:8px;">
+                <button class="precision-btn" data-precision="orientativa" onclick="setPrecision(this)">Orientativa</button>
+                <button class="precision-btn active" data-precision="precisa" onclick="setPrecision(this)">Precisa</button>
+                <button class="precision-btn" data-precision="literal" onclick="setPrecision(this)">Literal</button>
+            </div>
+            <button class="send-btn" id="sendBtn" onclick="sendMessage()">Enviar</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedLength = 'medium';
+        let selectedMode = 'consulta';
+        let selectedPrecision = 'precisa';
+
+        const modeDescriptions = {
+            'consulta': 'Consulta directa sobre normativa. Respuestas con referencias a articulos y plazos.',
+            'comunicacion_cliente': 'Genera borradores de comunicaciones dirigidas a clientes finales. Lenguaje claro y no tecnico.',
+            'briefing_interno': 'Genera resumenes ejecutivos para equipos internos (ICT, B2C, Contratos, Cobros).',
+            'deadlines': 'Lista cronologica de plazos, fechas limite y acciones requeridas.'
+        };
+
+        const modeTags = {
+            'consulta': 'Consulta regulatoria',
+            'comunicacion_cliente': 'Comunicacion a clientes',
+            'briefing_interno': 'Briefing interno',
+            'deadlines': 'Plazos y deadlines'
+        };
+
+        function setMode(btn) {
+            document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedMode = btn.dataset.mode;
+            document.getElementById('modeDescription').textContent = modeDescriptions[selectedMode];
+        }
+
+        function setLength(btn) {
+            document.querySelectorAll('.length-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedLength = btn.dataset.length;
+        }
+
+        function setPrecision(btn) {
+            document.querySelectorAll('.precision-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            selectedPrecision = btn.dataset.precision;
+        }
+
+        function quickStart(mode, question) {
+            // Set mode
+            document.querySelectorAll('.mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+            selectedMode = mode;
+            document.getElementById('modeDescription').textContent = modeDescriptions[mode];
+
+            // Set question and send
+            document.getElementById('userInput').value = question;
+            sendMessage();
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        document.getElementById('userInput').addEventListener('input', function() {
+            autoResize(this);
+        });
+
+        function handleKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function updateBudgetDisplay(percent, totalTokens, queries) {
+            const text = document.getElementById('budgetText');
+            const bar = document.getElementById('budgetBarFill');
+
+            text.textContent = percent + '% usado | ' + queries + ' consultas';
+            bar.style.width = Math.min(percent, 100) + '%';
+
+            if (percent < 50) bar.style.background = '#4ade80';
+            else if (percent < 75) bar.style.background = '#facc15';
+            else if (percent < 90) bar.style.background = '#fb923c';
+            else bar.style.background = '#ef4444';
+        }
+
+        function copyToClipboard(btn) {
+            const messageDiv = btn.closest('.message');
+            const clone = messageDiv.cloneNode(true);
+            // Remove sources and copy button from the clone
+            const sources = clone.querySelector('.sources');
+            const copyBtn = clone.querySelector('.copy-btn');
+            const modeTag = clone.querySelector('.mode-tag');
+            if (sources) sources.remove();
+            if (copyBtn) copyBtn.remove();
+            if (modeTag) modeTag.remove();
+
+            navigator.clipboard.writeText(clone.textContent.trim()).then(function() {
+                btn.textContent = 'Copiado!';
+                setTimeout(function() { btn.textContent = 'Copiar'; }, 1500);
+            });
+        }
+
+        function addMessage(text, role, sources, mode) {
+            var container = document.getElementById('chatContainer');
+            var welcome = document.getElementById('welcome');
+            if (welcome) welcome.style.display = 'none';
+
+            var div = document.createElement('div');
+            div.className = 'message ' + role;
+
+            if (role === 'assistant') {
+                // Add copy button
+                var copyBtn = document.createElement('button');
+                copyBtn.className = 'copy-btn';
+                copyBtn.textContent = 'Copiar';
+                copyBtn.onclick = function() { copyToClipboard(this); };
+                div.appendChild(copyBtn);
+
+                // Add mode tag
+                if (mode && modeTags[mode]) {
+                    var tag = document.createElement('div');
+                    tag.className = 'mode-tag';
+                    tag.textContent = modeTags[mode];
+                    div.appendChild(tag);
+                }
+
+                var html = text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\n\n/g, '<br><br>')
+                    .replace(/\n- /g, '<br>&#8226; ')
+                    .replace(/\n(\d+)\. /g, '<br>$1. ')
+                    .replace(/\n/g, '<br>')
+                    .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank">$1</a>');
+
+                var content = document.createElement('div');
+                content.innerHTML = html;
+                div.appendChild(content);
+
+                if (sources && sources.length > 0) {
+                    var sourcesDiv = document.createElement('div');
+                    sourcesDiv.className = 'sources';
+                    sourcesDiv.innerHTML = '<strong>Fuentes:</strong> ' +
+                        sources.map(function(s) { return s.replace('.pdf', ''); }).join(' | ');
+                    div.appendChild(sourcesDiv);
+                }
+
+                // Verification reminder
+                var verifyDiv = document.createElement('div');
+                verifyDiv.style.cssText = 'margin-top:8px;padding:8px 12px;background:#fff7ed;border-left:3px solid #f59e0b;border-radius:4px;font-size:11px;color:#92400e;';
+                verifyDiv.innerHTML = '&#9888; <strong>Verificar antes de usar:</strong> Esta respuesta es orientativa. Confirma siempre los datos en la fuente oficial (BOE/CNMC) antes de incluirlos en comunicaciones.';
+                div.appendChild(verifyDiv);
+            } else if (role === 'warning') {
+                div.textContent = text;
+            } else {
+                div.textContent = text;
+            }
+
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        async function sendMessage() {
+            var input = document.getElementById('userInput');
+            var btn = document.getElementById('sendBtn');
+            var message = input.value.trim();
+
+            if (!message) return;
+
+            addMessage(message, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+            btn.disabled = true;
+
+            var typing = document.getElementById('typingIndicator');
+            typing.classList.add('active');
+
+            try {
+                var response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        length: selectedLength,
+                        mode: selectedMode,
+                        precision: selectedPrecision
+                    })
+                });
+
+                var data = await response.json();
+
+                if (data.error) {
+                    addMessage('Error: ' + data.error, 'error');
+                } else {
+                    if (data.budget_warning) {
+                        addMessage(data.budget_warning, 'warning');
+                    }
+                    addMessage(data.response, 'assistant', data.sources, selectedMode);
+                    updateBudgetDisplay(
+                        data.budget_percent,
+                        data.total_tokens,
+                        data.queries_this_month
+                    );
+                }
+            } catch (err) {
+                addMessage('Error de conexion. Esta el servidor activo?', 'error');
+            }
+
+            typing.classList.remove('active');
+            btn.disabled = false;
+            input.focus();
+        }
+
+        async function resetChat() {
+            await fetch('/reset', { method: 'POST' });
+            location.reload();
+        }
+
+        function toggleResources() {
+            var overlay = document.getElementById('resourcesOverlay');
+            var panel = document.getElementById('resourcesPanel');
+            var isOpen = panel.classList.contains('active');
+
+            if (isOpen) {
+                overlay.classList.remove('active');
+                panel.classList.remove('active');
+            } else {
+                overlay.classList.add('active');
+                panel.classList.add('active');
+                loadResources();
+            }
+        }
+
+        async function loadResources() {
+            try {
+                var response = await fetch('/resources');
+                var data = await response.json();
+                var html = '';
+
+                var sections = ['normativa', 'cnmc', 'miteco', 'operadores', 'documentos_ingested'];
+                for (var i = 0; i < sections.length; i++) {
+                    var key = sections[i];
+                    var section = data[key];
+                    if (!section || !section.items || section.items.length === 0) continue;
+
+                    html += '<div class="resources-section">';
+                    html += '<h3>' + section.title + '</h3>';
+
+                    for (var j = 0; j < section.items.length; j++) {
+                        var item = section.items[j];
+                        html += '<div class="resource-item">';
+                        if (item.url) {
+                            html += '<a href="' + item.url + '" target="_blank">' + item.name + '</a>';
+                        } else {
+                            html += '<span class="doc-name">' + item.name + '</span>';
+                        }
+                        html += '</div>';
+                    }
+
+                    html += '</div>';
+                }
+
+                document.getElementById('resourcesContent').innerHTML = html;
+            } catch (err) {
+                document.getElementById('resourcesContent').textContent = 'Error al cargar recursos';
+            }
+        }
+
+        async function loadUsage() {
+            try {
+                var response = await fetch('/usage');
+                var data = await response.json();
+                updateBudgetDisplay(data.budget_percent, data.tokens_used, data.queries);
+            } catch (err) {
+                document.getElementById('budgetText').textContent = 'Sin datos';
+            }
+        }
+
+        loadUsage();
+    </script>
+</body>
+</html>

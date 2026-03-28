@@ -1,0 +1,7 @@
+anthropic
+chromadb
+sentence-transformers
+pypdf
+flask
+requests
+python-dotenv
