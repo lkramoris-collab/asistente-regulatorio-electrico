@@ -15,8 +15,8 @@ The assistant answers regulatory questions based on official documents (RD 88/20
 - **3 answer lengths**: Corta, Media, Detallada
 - **3 precision levels**: Orientativa (conversational), Precisa (with article references), Literal (near-exact citations with [VERIFICAR] tags)
 - **Confidence indicator**: Every response includes ALTO/MEDIO/BAJO confidence rating
-- **Verification reminder**: Orange warning on every response reminding users to verify in official sources
-- **30 verified official URLs**: BOE, CNMC, MITECO, REE, OMIE — the chatbot only references URLs from this verified list
+- **Verification reminder**: Highlighted warning on every response reminding users to verify in official sources
+- **29 verified official URLs**: BOE, CNMC, MITECO, REE, OMIE — the chatbot only references URLs from this verified list
 - **Resources panel**: Side panel with all official links and ingested documents
 - **Token budget tracking**: Monthly usage monitor with color-coded alerts
 - **Web scraping**: Script to download institutional web content and add to the knowledge base
@@ -60,7 +60,7 @@ User question → Embedding search (ChromaDB) → Top chunks retrieved
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/YOUR_USERNAME/asistente-regulatorio-electrico.git
+git clone https://github.com/lkramoris-collab/asistente-regulatorio-electrico.git
 cd asistente-regulatorio-electrico
 
 # 2. Create virtual environment
