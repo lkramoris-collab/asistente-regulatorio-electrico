@@ -42,7 +42,7 @@ User question → Embedding search (ChromaDB) → Top chunks retrieved
 ├── requirements.txt        ← Python dependencies
 ├── .env                    ← API key (not in repo)
 ├── token_usage.json        ← Monthly token tracking (auto-generated)
-├── documents/              ← Source PDFs (not in repo — add your own)
+├── documents/              ← Source PDFs (public source texts included)
 │   └── scraped/            ← Scraped web content (.txt files)
 ├── templates/
 │   └── index.html          ← Chat interface
